@@ -1,0 +1,22 @@
+# prompt base44
+je veux faire une app web de tracking stortif en temps reel. une route compétiteur, une route public. coté competiteur, cette app doit enregistrer périodiquement sa position, la mettre dans un base de tracking nominative. coté public, cette app doit doit pouvoir restituer le tracking temps reel sur une map la position actuelle du compétiteur, mais aussi son historique, afin d'avoir une courbe d'évolution de sa position. l'UX compétiteur doit avoir : bouton start, stop, clear, export pdf, et saisie de son pseudo. l'UX public doit avoir : visualisation sur un map du compétiteur, et saisie du pseudo a suivre. cette maps doit évoluer en temps réel en fonction des enregistrement qui s'ajoute. l'app doit avec un UX au look et usage du moment 2026. l'app doit avoir un fond sportif cyclisme / trail aussi bien sur la cosmétique, mais aussi sur la trame de fond
+# pour le competiteur : rentre le pseudo avant d'accédé à l'écran competiteur, et met son pseudo dans l'entete, plus besoin de le saisir dans cet ecran. pour le public, selectionne un pseudo dans la liste des pseudo existant avant d'entrer dans l'ecran du public, et met le pseudo dans l'entete, plus besoin de le saisir dans cet ecran
+# Garde l'écran de selection compétiteur et public, c'est au moment de choisir que pour le compétiteur : on saisie le pseudo, pour le public : on selectionne dans la liste des existants
+# pour le compétiteur, garde l'application active dans l'enregistrement, meme en mode veille. par contre quand l'application est stoppée par le user, les enregistrement sont stopés en meme temps que l'application
+# enleve de l'écran public la courbe de vitesse
+# ajoute en public, un indicateur sur l'enregistrement actif du compétiteur, afin d'avoir un visuel que coté compétiteur, on est sur start, et que les enregistrement fonctionne
+# en public, je n'ai pas les meme chose affichée sur laptop et smartphone, en smartphone, j'au une courbe de vitesse qui s'affiche, enlève la
+# peux tu ajouter une icon pour passer en plein ecran, afin d'éviter l'affichage du navigateur sur mon smartphone
+# il manque ajouter l'icon pour passer en plein ecran sur l'ecran public
+# sur l'ecran competiteur, 1/ compact l'information, 2/ supprime le texte inutile 3/ met l'information sur un seul ecran besoin d'avoir un scrolling 4/ supprime les point hératic GPS, si la distance au point précédent est supérieur à (temp en cours - temps point précédent) * 80km/h alors ne prendre pas en compte le point, le dernier point reste le précédent
+# toujours dans l écran competiteur, 1/ ajoute la fonction pause, on a maintenant start (commence un nouvelle enregistrement), stop (fini l'enregistrement) et pause/resume (met en pause l'enregistrement ou le continu l'enregistrement) 2/ modifie pdf en gpx, sauve les points en fichier gpx
+# sur l'ecran competiteur, augmente significativement le contrast de la carte, passe les information d'openstreetmap en blanc
+# sur l'ecran d'acceuil, enlève le texte superfu, ne garde qu'un titre accrocheur et les zones de selection espace compétiteur et espace live
+# sur l'ecran live, idem a competiteur, compact le, enleve le texte inutile, et affiche tout sur le meme ecran sans besoin de scroller vers le bas
+# sur l'écran competiteur, il y a de la place perdu, donc passe le indicateur sur 2 lignes : distance et temps, puis vit instantanée et vit moyenne. l'ecran doit reste sur une page. pour gagner de la place, supprime l'affichage du nombre de pts
+# sur ecran live, met les information sur 2 lignes : distance, durée, puis vitesse instantanée, vitesse moyenne. l'affichage doit se faire sur un ecran sans scrolling
+# quand j'appui sur clear de l'ecran competiteur, ca ne clear pas la map et les données, corrige cela
+# on ne voit quazi rien de la map, est ce possible de la rendre plus visible
+# passe a un point toute les 10s
+# est il possible de reduire la consommation de mon smartphone lors de l'utilisation de l'app, ma baterie ne tient que 2 heures, lors de l'utilisation
+
