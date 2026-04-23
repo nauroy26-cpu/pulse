@@ -1,0 +1,146 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Archivo+Black&display=swap');
+
+@layer base {
+  :root {
+    /* Dark sport theme - 2026 look */
+    --background: 0 0% 6%;
+    --foreground: 60 5% 96%;
+    --card: 0 0% 9%;
+    --card-foreground: 60 5% 96%;
+    --popover: 0 0% 8%;
+    --popover-foreground: 60 5% 96%;
+
+    /* Lime energy - cyclisme/trail signature */
+    --primary: 75 95% 55%;
+    --primary-foreground: 0 0% 6%;
+
+    --secondary: 0 0% 14%;
+    --secondary-foreground: 60 5% 96%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 60 3% 60%;
+
+    /* Burnt orange accent */
+    --accent: 18 85% 55%;
+    --accent-foreground: 0 0% 6%;
+
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 16%;
+    --input: 0 0% 14%;
+    --ring: 75 95% 55%;
+
+    --chart-1: 75 95% 55%;
+    --chart-2: 18 85% 55%;
+    --chart-3: 200 80% 60%;
+    --chart-4: 340 75% 60%;
+    --chart-5: 45 95% 60%;
+
+    --radius: 0.75rem;
+
+    --font-display: 'Archivo Black', sans-serif;
+    --font-sans: 'Space Grotesk', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  .dark {
+    --background: 0 0% 6%;
+    --foreground: 60 5% 96%;
+    --card: 0 0% 9%;
+    --card-foreground: 60 5% 96%;
+    --popover: 0 0% 8%;
+    --popover-foreground: 60 5% 96%;
+    --primary: 75 95% 55%;
+    --primary-foreground: 0 0% 6%;
+    --secondary: 0 0% 14%;
+    --secondary-foreground: 60 5% 96%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 60 3% 60%;
+    --accent: 18 85% 55%;
+    --accent-foreground: 0 0% 6%;
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 16%;
+    --input: 0 0% 14%;
+    --ring: 75 95% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html, body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+
+  .font-mono {
+    font-family: var(--font-mono);
+  }
+}
+
+@layer utilities {
+  .grain::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.04;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .glass {
+    background: rgba(20, 20, 20, 0.55);
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .glow-primary {
+    box-shadow: 0 0 40px -10px hsl(var(--primary) / 0.5);
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  @keyframes pulse-ring {
+    0% { transform: scale(0.8); opacity: 1; }
+    100% { transform: scale(2.5); opacity: 0; }
+  }
+
+  .pulse-ring {
+    animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+  }
+}
+
+/* Leaflet dark tweaks */
+.leaflet-container {
+  background: #0a0a0a !important;
+  font-family: var(--font-sans);
+}
+.leaflet-control-attribution {
+  background: rgba(0,0,0,0.75) !important;
+  color: #fff !important;
+  font-size: 10px !important;
+}
+.leaflet-control-attribution a {
+  color: #fff !important;
+}
+.leaflet-control-zoom a {
+  background: rgba(20,20,20,0.9) !important;
+  color: #fff !important;
+  border-color: rgba(255,255,255,0.1) !important;
+}

@@ -1,0 +1,45 @@
+{
+  "name": "Session",
+  "type": "object",
+  "properties": {
+    "pseudo": {
+      "type": "string",
+      "description": "Pseudo normalis\u00e9 du comp\u00e9titeur"
+    },
+    "display_name": {
+      "type": "string",
+      "description": "Pseudo affich\u00e9"
+    },
+    "session_id": {
+      "type": "string",
+      "description": "ID unique de la session (m\u00eame que dans TrackPoint)"
+    },
+    "label": {
+      "type": "string",
+      "description": "Nom affich\u00e9 de la session (ex: Sortie du 18/04)"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "D\u00e9but de la session"
+    },
+    "ended_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Fin de la session"
+    },
+    "point_count": {
+      "type": "number",
+      "description": "Nombre de points GPS enregistr\u00e9s"
+    },
+    "distance_km": {
+      "type": "number",
+      "description": "Distance totale en km"
+    }
+  },
+  "required": [
+    "pseudo",
+    "session_id",
+    "started_at"
+  ]
+}

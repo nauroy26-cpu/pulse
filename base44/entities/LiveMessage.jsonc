@@ -1,0 +1,23 @@
+{
+  "name": "LiveMessage",
+  "type": "object",
+  "properties": {
+    "pseudo": {
+      "type": "string",
+      "description": "Pseudo normalis\u00e9 du comp\u00e9titeur destinataire"
+    },
+    "message": {
+      "type": "string",
+      "description": "Contenu du message"
+    },
+    "read_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Date de lecture (null si non lu)"
+    }
+  },
+  "required": [
+    "pseudo",
+    "message"
+  ]
+}

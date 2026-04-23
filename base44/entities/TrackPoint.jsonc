@@ -1,0 +1,53 @@
+{
+  "name": "TrackPoint",
+  "type": "object",
+  "properties": {
+    "pseudo": {
+      "type": "string",
+      "description": "Pseudo du comp\u00e9titeur (normalis\u00e9 en minuscules)"
+    },
+    "display_name": {
+      "type": "string",
+      "description": "Pseudo tel que saisi par l'utilisateur"
+    },
+    "lat": {
+      "type": "number",
+      "description": "Latitude"
+    },
+    "lng": {
+      "type": "number",
+      "description": "Longitude"
+    },
+    "altitude": {
+      "type": "number",
+      "description": "Altitude en m\u00e8tres"
+    },
+    "speed": {
+      "type": "number",
+      "description": "Vitesse en m/s"
+    },
+    "accuracy": {
+      "type": "number",
+      "description": "Pr\u00e9cision GPS en m\u00e8tres"
+    },
+    "heading": {
+      "type": "number",
+      "description": "Cap en degr\u00e9s"
+    },
+    "recorded_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp de l'enregistrement"
+    },
+    "session_id": {
+      "type": "string",
+      "description": "ID de la session de tracking"
+    }
+  },
+  "required": [
+    "pseudo",
+    "lat",
+    "lng",
+    "recorded_at"
+  ]
+}
