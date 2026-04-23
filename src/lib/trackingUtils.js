@@ -44,28 +44,3 @@ export function msToKmh(speed) {
 export function normalizePseudo(p) {
   return (p || "").trim().toLowerCase();
 }
-
-// Filtre les points GPS aberrants :
-// - accuracy trop élevée (signal faible)
-// - vitesse instantanée impossible entre deux points (> maxSpeedKmh)
-export function filterGpsPoints(points, { maxAccuracy = 50, maxSpeedKmh = 200 } = {}) {
-  if (!points || points.length === 0) return points;
-  const filtered = [];
-  for (let i = 0; i < points.length; i++) {
-    const p = points[i];
-    // Filtre précision GPS
-    if (p.accuracy != null && p.accuracy > maxAccuracy) continue;
-    // Filtre vitesse impossible par rapport au point précédent accepté
-    if (filtered.length > 0) {
-      const prev = filtered[filtered.length - 1];
-      const dt = (new Date(p.recorded_at) - new Date(prev.recorded_at)) / 1000; // secondes
-      if (dt > 0) {
-        const dist = haversine(prev, p);
-        const speedKmh = (dist / dt) * 3.6;
-        if (speedKmh > maxSpeedKmh) continue;
-      }
-    }
-    filtered.push(p);
-  }
-  return filtered;
-}

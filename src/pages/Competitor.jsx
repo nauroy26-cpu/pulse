@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Maximize, Minimize, AlertTriangle, Play, Square, Pause, Trash2, FileDown, FolderOpen } from 'lucide-react';
+import { ArrowLeft, Radio, AlertTriangle, Play, Square, Pause, Trash2, FileDown, FolderOpen } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import FullscreenLock from '@/components/tracking/FullscreenLock';
 import { toast } from 'sonner';
@@ -26,8 +26,6 @@ export default function Competitor() {
 
   // Points chargés (Load / GPX importé) — indépendants de la session live
   const [loadedPoints, setLoadedPoints] = useState([]);
-  const [loadedPointsReady, setLoadedPointsReady] = useState(false);
-  const [fitKey, setFitKey] = useState(null);
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   // Flag pour savoir si l'utilisateur a cliqué sur "Retour" (navigation volontaire)
@@ -51,11 +49,6 @@ export default function Competitor() {
 
   const { isTracking, isPaused, points, setPoints, sessionId, start, stop, pause, resume, pendingCount, isOnline } = useCompetitorTracking({ onError: (m) => toast.error(m) });
 
-  // Mark ready (no restore on mount)
-  useEffect(() => {
-    setLoadedPointsReady(true);
-  }, []);
-
   // Persist loaded points to ReferenceTrace only when tracking is active
   useEffect(() => {
     if (!isTracking || !pseudo) return;
@@ -70,22 +63,16 @@ export default function Competitor() {
       }
     };
     save().catch(() => {});
-  }, [loadedPoints, isTracking, pseudo]);
+  }, [isTracking, loadedPoints, pseudo]);
 
   // Ne pas recharger l'historique au montage — la vue live ne montre que la session active
   // useEffect(() => { if (pseudo) loadExisting(pseudo); }, [pseudo, loadExisting]);
 
-  // Force fullscreen on mount
+  // Auto fullscreen on mount
   useEffect(() => {
-    const el = document.documentElement;
-    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-      if (el.requestFullscreen) {
-        el.requestFullscreen().catch(() => {});
-      } else if (el.webkitRequestFullscreen) {
-        el.webkitRequestFullscreen();
-      }
-    }
-    setIsFullscreen(!!(document.fullscreenElement || document.webkitFullscreenElement));
+    if (document.fullscreenElement) return;
+    document.documentElement.requestFullscreen().catch(() => {});
+    setIsFullscreen(true);
   }, []);
 
   const [now, setNow] = useState(Date.now());
@@ -116,12 +103,11 @@ export default function Competitor() {
   const handleStart = async () => { await start(pseudo); toast.success(`Live · ${pseudo}`); };
   const handleStop = async () => {
     stop();
-    // Supprimer la ReferenceTrace à la clôture de la session
+    // Supprimer la trace chargée de ReferenceTrace
     const normalized = normalizePseudo(pseudo);
     if (normalized) {
-      base44.entities.ReferenceTrace.filter({ pseudo: normalized }, '-created_date', 10)
-        .then((existing) => Promise.all((existing || []).map(r => base44.entities.ReferenceTrace.delete(r.id))))
-        .catch(() => {});
+      const existing = await base44.entities.ReferenceTrace.filter({ pseudo: normalized }, '-created_date', 10);
+      await Promise.all((existing || []).map(r => base44.entities.ReferenceTrace.delete(r.id)));
     }
     toast('Session stoppée', { icon: '⏹' });
   };
@@ -130,7 +116,7 @@ export default function Competitor() {
     else { pause(); toast('En pause', { icon: '⏸' }); }
   };
   const handleClear = async () => {
-    // Clear efface aussi les points chargés (et la ReferenceTrace sera effacée par le useEffect)
+    // Clear efface aussi les points chargés
     setLoadedPoints([]);
     if (!sessionId) { setPoints([]); return; }
     setPoints([]);
@@ -150,20 +136,9 @@ export default function Competitor() {
   };
   const handleExport = () => setShowExportModal(true);
 
-  const toggleFullscreen = () => {
-    const el = document.documentElement;
-    if (document.fullscreenElement) {
-      document.exitFullscreen().catch(() => {});
-    } else if (el.requestFullscreen) {
-      el.requestFullscreen().catch(() => {});
-    } else if (el.webkitRequestFullscreen) {
-      // Safari / iOS
-      el.webkitRequestFullscreen();
-    }
-  };
-
   const handleExitFullscreen = () => {
     // Appelé par le bouton hold-to-unlock — on déverrouille mais reste en fullscreen
+    // (l'écran se déverrouille, le plein écran reste actif)
   };
 
   if (!pseudo) return null;
@@ -175,13 +150,14 @@ export default function Competitor() {
       <SessionExportModal pseudo={pseudo} onClose={() => setShowExportModal(false)} />
     )}
     {showLoadModal && (
-      <SessionLoadModal pseudo={pseudo} onLoad={(pts) => { setLoadedPoints(pts); setFitKey(k => (k ?? 0) + 1); }} onClose={() => setShowLoadModal(false)} />
+      <SessionLoadModal pseudo={pseudo} onLoad={(pts) => setLoadedPoints(pts)} onClose={() => setShowLoadModal(false)} />
     )}
     <div className="h-screen bg-background relative grain overflow-hidden flex flex-col">
       <TopoBackground />
 
-      {/* Header — toujours en dehors du FullscreenLock pour rester cliquable */}
-      <header className="relative z-50 px-4 md:px-8 pt-4 pb-2 flex items-center justify-between shrink-0 bg-black/40 backdrop-blur-sm">
+      <FullscreenLock isFullscreen={isFullscreen} isTracking={isTracking} onExitFullscreen={handleExitFullscreen}>
+      {/* Header */}
+      <header className="relative z-10 px-4 md:px-8 pt-4 pb-2 flex items-center justify-between shrink-0">
         <Link
           to="/"
           onClick={() => { navigatingAwayRef.current = true; document.exitFullscreen().catch(() => {}); }}
@@ -209,18 +185,11 @@ export default function Competitor() {
         </div>
 
         <div className="flex items-center gap-2">
-          <button
-            onClick={toggleFullscreen}
-            className="w-7 h-7 rounded-lg bg-secondary/60 flex items-center justify-center text-muted-foreground hover:text-foreground transition"
-            title="Plein écran"
-          >
-            {isFullscreen ? <Minimize className="w-3.5 h-3.5" /> : <Maximize className="w-3.5 h-3.5" />}
-          </button>
+          <Radio className="w-3.5 h-3.5 text-muted-foreground" />
         </div>
       </header>
 
-      {/* Main — enveloppé par FullscreenLock */}
-      <FullscreenLock isFullscreen={isFullscreen} isTracking={isTracking} onExitFullscreen={handleExitFullscreen}>
+      {/* Main */}
       <main className="relative z-10 flex-1 px-4 md:px-8 pb-4 grid lg:grid-cols-5 gap-4 min-h-0">
 
         {/* Left panel */}
@@ -311,7 +280,7 @@ export default function Competitor() {
 
         {/* Map */}
         <div className="lg:col-span-3 min-h-0 h-full">
-          <TrackingMap points={points} loadedPoints={loadedPoints} follow={isTracking} fitKey={fitKey} />
+          <TrackingMap points={points} loadedPoints={loadedPoints} follow={isTracking} />
         </div>
       </main>
       </FullscreenLock>
