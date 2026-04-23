@@ -2,14 +2,32 @@ import React, { useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Polyline, CircleMarker, useMap } from 'react-leaflet';
 import L from 'leaflet';
 
-function AutoFit({ points, loadedPoints, follow }) {
+
+
+function AutoFit({ points, loadedPoints, follow, fitKey }) {
   const map = useMap();
   const firstFit = useRef(false);
+  const prevFitKey = useRef(null);
 
   const allPoints = [...points, ...loadedPoints];
 
+  // Re-fit quand fitKey change (nouvelle trace chargée)
   useEffect(() => {
+    if (fitKey !== null && fitKey !== prevFitKey.current) {
+      prevFitKey.current = fitKey;
+      if (allPoints.length === 0) return;
+      if (allPoints.length === 1) {
+        map.setView([allPoints[0].lat, allPoints[0].lng], 15);
+      } else {
+        const bounds = L.latLngBounds(allPoints.map(p => [p.lat, p.lng]));
+        map.fitBounds(bounds, { padding: [40, 40] });
+      }
+      firstFit.current = true;
+      return;
+    }
+
     if (allPoints.length === 0) return;
+
     if (!firstFit.current) {
       if (allPoints.length === 1) {
         map.setView([allPoints[0].lat, allPoints[0].lng], 15);
@@ -22,12 +40,12 @@ function AutoFit({ points, loadedPoints, follow }) {
       const last = points[points.length - 1];
       map.panTo([last.lat, last.lng], { animate: true, duration: 0.8 });
     }
-  }, [points, loadedPoints, follow, map]);
+  }, [points, loadedPoints, follow, fitKey, map]);
 
   return null;
 }
 
-export default function TrackingMap({ points = [], follow = true, center = [46.5, 2.5], zoom = 5, loadedPoints: loadedPointsProp = [] }) {
+export default function TrackingMap({ points = [], follow = true, center = [46.5, 2.5], zoom = 5, loadedPoints: loadedPointsProp = [], fitKey = null }) {
   // Separate live points from loaded/imported points
   const livePoints = points.filter(p => !p._loaded);
   const loadedPoints = [...points.filter(p => p._loaded), ...loadedPointsProp];
@@ -36,16 +54,19 @@ export default function TrackingMap({ points = [], follow = true, center = [46.5
   const loadedLatLngs = loadedPoints.map(p => [p.lat, p.lng]);
 
   const lastLive = livePoints[livePoints.length - 1];
-  const firstPoint = points[0];
-  const mapCenter = lastLive ? [lastLive.lat, lastLive.lng]
-    : loadedPoints[0] ? [loadedPoints[0].lat, loadedPoints[0].lng]
+
+  // Center initial sur dernier point live ou premier point chargé (pas de persist zoom/position)
+  const mapCenter = lastLive
+    ? [lastLive.lat, lastLive.lng]
+    : loadedPoints[0]
+    ? [loadedPoints[0].lat, loadedPoints[0].lng]
     : center;
 
   return (
     <div className="relative w-full h-full rounded-2xl overflow-hidden ring-1 ring-border">
       <MapContainer
         center={mapCenter}
-        zoom={lastLive ? 14 : zoom}
+        zoom={zoom}
         scrollWheelZoom
         className="w-full h-full"
         style={{ minHeight: 300 }}
@@ -116,7 +137,7 @@ export default function TrackingMap({ points = [], follow = true, center = [46.5
           </>
         )}
 
-        <AutoFit points={livePoints} loadedPoints={loadedPoints} follow={follow} />
+        <AutoFit points={livePoints} loadedPoints={loadedPoints} follow={follow} fitKey={fitKey} />
       </MapContainer>
     </div>
   );

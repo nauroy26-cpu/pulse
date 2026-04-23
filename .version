@@ -1,0 +1,11 @@
+Fiche origine
+File : proficient-pulse-track-live beta 4 - ref git.zip
+
+Fiche de version — PULSE app (Base44 vs référence GitHub)
+Date : 2026-04-23 Dépôt de référence : nauroy26-cpu/pulse
+File : proficient-pulse-track-live beta 5.zip
+Évolutions apportées par rapport à la référence
+1. GPS adaptatif Intervalle de collecte GPS dynamique selon la précision du signal (5s–20s) au lieu d'un intervalle fixe de 15s. Signal faible → polling accéléré pour trouver un bon fix.
+2. Filtrage GPS renforcé Rejet des points dont la précision GPS dépasse 60m, en plus du filtre existant sur les déplacements impossibles (vitesse > seuil).
+3. Reprise de session après kill de l'appli Si l'appli est fermée/tuée pendant une session active, la session reprend automatiquement à la réouverture grâce à un état persisté en localStorage, sans perte de session ni de session_id.
+4. Support fullscreen Safari/iOS Ajout du fallback webkitRequestFullscreen pour les appareils Apple, avec détection des deux états (fullscreenElement et webkitFullscreenElement).

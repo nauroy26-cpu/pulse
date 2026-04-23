@@ -4,19 +4,32 @@ import { Lock, Unlock } from 'lucide-react';
 const LOCK_DELAY_MS = 10000;
 const DIM_DELAY_MS = 10000;
 const HOLD_DURATION_MS = 1500;
+const WAKE_DURATION_MS = 5000;
 
 export default function FullscreenLock({ isFullscreen, isTracking, onExitFullscreen, children }) {
   const [isDimmed, setIsDimmed] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
   const [holdProgress, setHoldProgress] = useState(0);
+  const [hasPopup, setHasPopup] = useState(false);
 
   const dimTimerRef = useRef(null);
   const lockTimerRef = useRef(null);
   const holdTimerRef = useRef(null);
   const holdIntervalRef = useRef(null);
   const holdStartRef = useRef(null);
+  const wakeTimerRef = useRef(null);
   const onExitRef = useRef(onExitFullscreen);
   onExitRef.current = onExitFullscreen;
+
+  // Tap on bottom lock icon → wake screen for 5s
+  const handleBottomLockTap = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDimmed(false);
+    clearTimeout(dimTimerRef.current);
+    clearTimeout(wakeTimerRef.current);
+    wakeTimerRef.current = setTimeout(() => setIsDimmed(true), WAKE_DURATION_MS);
+  };
 
   const shouldLock = isFullscreen && isTracking;
 
@@ -33,6 +46,21 @@ export default function FullscreenLock({ isFullscreen, isTracking, onExitFullscr
       startDimTimer();
     }, LOCK_DELAY_MS);
   };
+
+  // Watch for brightness overlay (popup) visibility
+  useEffect(() => {
+    const brightnessEl = document.querySelector('[style*="opacity"]');
+    if (!brightnessEl) return;
+
+    const checkBrightness = () => {
+      const opacity = parseFloat(brightnessEl.style.opacity || '0');
+      setHasPopup(opacity > 0);
+    };
+
+    const observer = new MutationObserver(checkBrightness);
+    observer.observe(brightnessEl, { attributes: true, attributeFilter: ['style'] });
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (shouldLock) {
@@ -51,6 +79,15 @@ export default function FullscreenLock({ isFullscreen, isTracking, onExitFullscr
     };
   }, [shouldLock]);
 
+  // Pause dimming while popup is visible
+  useEffect(() => {
+    if (hasPopup && !isDimmed) {
+      clearTimeout(dimTimerRef.current);
+    } else if (!hasPopup && !isDimmed && isLocked) {
+      startDimTimer();
+    }
+  }, [hasPopup, isDimmed, isLocked]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -58,6 +95,7 @@ export default function FullscreenLock({ isFullscreen, isTracking, onExitFullscr
       clearInterval(holdIntervalRef.current);
       clearTimeout(dimTimerRef.current);
       clearTimeout(lockTimerRef.current);
+      clearTimeout(wakeTimerRef.current);
     };
   }, []);
 
@@ -112,27 +150,19 @@ export default function FullscreenLock({ isFullscreen, isTracking, onExitFullscr
         {children}
       </div>
 
-      {/* Interaction blocker — captures all pointer events to block map controls etc. */}
-      <div className="absolute inset-0 z-40" style={{ touchAction: 'none' }} />
+      {/* Full-screen interaction blocker — covers header and main */}
+      <div className="fixed inset-0 z-[60]" style={{ touchAction: 'none' }} />
 
       {/* Dim overlay */}
       <div
-        className="absolute inset-0 z-40 transition-all duration-1000 pointer-events-none"
+        className="fixed inset-0 z-[65] transition-all duration-1000 pointer-events-none"
         style={{ background: isDimmed ? 'rgba(0,0,0,0.92)' : 'rgba(0,0,0,0.0)' }}
       />
 
-      {/* Lock label */}
-      {!isDimmed && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/40 border border-white/10 pointer-events-none">
-          <Lock className="w-3 h-3 text-muted-foreground/70" />
-          <span className="text-[10px] font-mono text-muted-foreground/70 uppercase tracking-widest">
-            Écran verrouillé
-          </span>
-        </div>
-      )}
 
-      {/* Hold-to-unlock button — on top of everything, fully interactive */}
-      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-3">
+
+      {/* Hold-to-unlock button using lock icon — on top of everything, fully interactive */}
+      <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[70] flex flex-col items-center gap-3">
         <div className="relative flex items-center justify-center select-none">
           <svg
             width={72}
@@ -160,16 +190,13 @@ export default function FullscreenLock({ isFullscreen, isTracking, onExitFullscr
             onTouchStart={startHold}
             onTouchEnd={cancelHold}
             onTouchCancel={cancelHold}
+            onClick={handleBottomLockTap}
             className="w-[72px] h-[72px] rounded-full flex items-center justify-center bg-black/60 border border-white/10 active:bg-black/80 transition-colors"
             style={{ touchAction: 'none', WebkitUserSelect: 'none', userSelect: 'none' }}
           >
-            <Unlock className="w-6 h-6 text-white/70" />
+            <Lock className="w-6 h-6 text-white/70" />
           </button>
         </div>
-
-        <p className="text-[11px] font-mono text-white/40 uppercase tracking-widest pointer-events-none">
-          {holdProgress > 0 ? 'Maintenir…' : 'Maintenir pour déverrouiller'}
-        </p>
       </div>
     </div>
   );

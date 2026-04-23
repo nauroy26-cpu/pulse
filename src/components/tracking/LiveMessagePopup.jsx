@@ -25,21 +25,29 @@ export default function LiveMessagePopup({ pseudo }) {
     const normalized = normalizePseudo(pseudo);
     if (!normalized) return;
 
-    const poll = async () => {
-      const msgs = await base44.entities.LiveMessage.filter(
-        { pseudo: normalized },
-        'created_date',
-        10
-      );
-      // Find first unread message
-      const unread = (msgs || []).find(m => !m.read_at);
-      if (!unread) return;
-
+    const showMessage = async (msg) => {
       // Mark as read immediately
-      await base44.entities.LiveMessage.update(unread.id, { read_at: new Date().toISOString() });
+      await base44.entities.LiveMessage.update(msg.id, { read_at: new Date().toISOString() });
+
+      // Sound — bip bip
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        [0, 180].forEach((delay) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.frequency.value = 880;
+          osc.type = 'sine';
+          gain.gain.setValueAtTime(0.4, ctx.currentTime + delay / 1000);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay / 1000 + 0.15);
+          osc.start(ctx.currentTime + delay / 1000);
+          osc.stop(ctx.currentTime + delay / 1000 + 0.15);
+        });
+      } catch (_) {}
 
       // Show popup
-      setPopup({ id: unread.id, message: unread.message });
+      setPopup({ id: msg.id, message: msg.message });
 
       // Max brightness
       if (brightnessRef.current) {
@@ -58,9 +66,15 @@ export default function LiveMessagePopup({ pseudo }) {
       timerRef.current = setTimeout(dismiss, DISPLAY_MS);
     };
 
-    const interval = setInterval(poll, POLL_MS);
+    // Subscribe to new messages
+    const unsubscribe = base44.entities.LiveMessage.subscribe((event) => {
+      if (event.type === 'create' && event.data.pseudo === normalized && !event.data.read_at) {
+        showMessage(event.data);
+      }
+    });
+
     return () => {
-      clearInterval(interval);
+      unsubscribe();
       clearTimeout(timerRef.current);
     };
   }, [pseudo]);
@@ -77,42 +91,35 @@ export default function LiveMessagePopup({ pseudo }) {
       <AnimatePresence>
         {popup && (
           <motion.div
-            className="fixed inset-0 z-[100] flex items-center justify-center p-6"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            className="fixed top-0 left-0 right-0 z-[100] md:left-auto md:top-20 md:w-[calc(var(--left-panel-width,50vw))] p-4 md:p-8"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
             onClick={dismiss}
           >
-            {/* Semi-transparent backdrop — still shows map/UI behind */}
-            <div className="absolute inset-0 bg-black/75 backdrop-blur-md" />
-
             <motion.div
-              className="relative z-10 w-full max-w-lg"
-              initial={{ scale: 0.85, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.85, y: 20 }}
+              className="w-full"
+              initial={{ scale: 0.85 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.85 }}
               transition={{ type: 'spring', stiffness: 260, damping: 22 }}
             >
               {/* Icon */}
-              <div className="flex justify-center mb-6">
-                <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center glow-primary">
-                  <MessageCircle className="w-8 h-8 text-primary-foreground" />
+              <div className="flex justify-center mb-4">
+                <div className="w-14 h-14 rounded-xl bg-primary flex items-center justify-center glow-primary">
+                  <MessageCircle className="w-7 h-7 text-primary-foreground" />
                 </div>
               </div>
 
               {/* Message */}
-              <div className="glass rounded-3xl px-8 py-8 text-center shadow-2xl border border-primary/30">
-                <div className="text-[11px] uppercase tracking-[0.35em] font-mono text-primary mb-4">
+              <div className="glass rounded-2xl px-6 py-6 text-center shadow-2xl border border-primary/30">
+                <div className="text-[10px] uppercase tracking-[0.3em] font-mono text-primary mb-3">
                   Message live
                 </div>
-                <p className="font-display text-3xl md:text-4xl leading-tight text-foreground break-words whitespace-pre-wrap">
+                <p className="font-display text-2xl leading-tight text-foreground break-words whitespace-pre-wrap">
                   {popup.message}
                 </p>
               </div>
-
-              <p className="text-center text-[11px] font-mono text-muted-foreground mt-5 uppercase tracking-widest">
-                Toucher pour fermer
-              </p>
             </motion.div>
           </motion.div>
         )}
